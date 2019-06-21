@@ -18,7 +18,7 @@ fn main() {
             routes![
                 routes::create_ticket,
                 routes::create_ticket_with,
-                routes::get_ticket,
+                routes::get_ticket_from,
                 routes::get_ticket_list,
                 routes::append_to_ticket,
                 routes::evaluate_ticket

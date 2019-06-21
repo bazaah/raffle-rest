@@ -1,48 +1,81 @@
 use {
-    serde::Serialize,
     rand::{
         distributions::{Distribution, Uniform},
         thread_rng as rng,
     },
+    serde::Serialize,
     serde_json::{json, value::Value as jVal},
-    std::fmt,
+    std::{collections::BTreeMap, fmt},
 };
 
+#[derive(Debug, Clone)]
+pub enum ErrorKind {
+    TicketNotFound(u64),
+}
+
+impl fmt::Display for ErrorKind {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ErrorKind::TicketNotFound(id) => write!(f, "Ticket id: {} doesn't exist", id),
+        }
+    }
+}
+
 pub struct Raffle {
-    tickets: Vec<Ticket>,
+    count: u64,
+    tickets: BTreeMap<u64, Ticket>,
 }
 
 impl Raffle {
     pub fn instantiate() -> Self {
-        let tickets: Vec<Ticket> = Vec::new();
-        Raffle { tickets }
+        let count = 0u64;
+        let tickets: BTreeMap<u64, Ticket> = BTreeMap::new();
+        Raffle { count, tickets }
     }
 
-    pub fn new_ticket(&mut self) -> Result<(), ()> {
-        match self.tickets.len() == usize::max_value() {
-            false => {
-                self.tickets.push(Ticket::new());
-                Ok(())
+    pub fn new_ticket(&mut self, lines: Option<u64>) -> u64 {
+        self.count += 1;
+
+        if self.tickets.contains_key(&self.count) {
+            self.count = self.find_unused_key()
+        }
+
+        let ticket = match lines {
+            Some(lines) => Ticket::from(lines),
+            None => Ticket::new(),
+        };
+
+        self.tickets.insert(self.count, ticket);
+        eprintln!("{:?}", &self.tickets);
+        self.count
+    }
+
+    pub fn get_ticket(&self, id: u64) -> Result<jVal, ErrorKind> {
+        match self.tickets.get(&id) {
+            Some(ticket) => Ok(json!({"id": id, "lines": ticket.eval_list()})),
+            None => {
+                let err = Err(ErrorKind::TicketNotFound(id));
+                eprintln!("in models {:?}", err);
+                err
             }
-            true => Err(()),
         }
     }
 
-    pub fn new_ticket_from(&mut self, lines: u64) -> Result<(), ()> {
-        match self.tickets.len() == usize::max_value() {
-            false => {
-                self.tickets.push(Ticket::from(lines));
-                Ok(())
+    pub fn append_ticket(&mut self, id: u64, additional: u64) -> Result<(), ErrorKind> {
+        match self.tickets.get_mut(&id) {
+            Some(ticket) => Ok(ticket.append(additional)),
+            None => {
+                let err = Err(ErrorKind::TicketNotFound(id));
+                eprintln!("in models {:?}", err);
+                err
             }
-            true => Err(()),
         }
     }
 
-    pub fn get_ticket_list(&self) -> Vec<jVal> {
-        let json: Vec<jVal> = self
+    pub fn get_ticket_list(&self) -> jVal {
+        let json: jVal = self
             .tickets
             .iter()
-            .enumerate()
             .map(|(idx, ticket)| {
                 json!({
                     "id": idx,
@@ -53,9 +86,38 @@ impl Raffle {
 
         json
     }
+
+    pub fn evaluate_ticket(&mut self, id: u64) -> Result<jVal, ErrorKind> {
+        match self.tickets.remove(&id) {
+            Some(ticket) => {
+                let list = ticket.eval_list();
+                let sum: u64 = list.iter().map(|i| *i as u64).sum();
+                let score = sum / list.len() as u64;
+                let response = match score {
+                    _n @ 0 => format_args!("you get nothing; good day sir!"),
+                    _n @ 1..=3 => format_args!("slightly better than a hostel shower!"),
+                    _n @ 4..=7 => format_args!("you're one of today's lucky 10,000!"),
+                    _n @ 8..=9 => format_args!("almost enough for a mediocre pizza!"),
+                    _ => format_args!("ding ding ding, you won the imaginary jackpot!"),
+                };
+                Ok(json!(format!(
+                    "For ticket {}, your score was {}... {}",
+                    id, score, response
+                )))
+            }
+            None => Err(ErrorKind::TicketNotFound(id)),
+        }
+    }
+
+    fn find_unused_key(&self) -> u64 {
+        (self.count..)
+            .filter(|k| !self.tickets.contains_key(k))
+            .take(1)
+            .sum()
+    }
 }
 
-#[derive(Clone, Serialize)]
+#[derive(Clone, Serialize, Debug)]
 struct Ticket {
     line_list: Vec<Line>,
 }
@@ -97,6 +159,19 @@ impl Ticket {
             .inspect(|line| eprintln!("{:?}", line))
             .map(|line| line.eval_line())
             .collect::<Vec<u8>>()
+    }
+}
+
+impl fmt::Display for Ticket {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "[")?;
+        for (i, line) in self.line_list.iter().enumerate() {
+            if i != 0 {
+                write!(f, " ")?;
+            }
+            write!(f, "{}", line)?;
+        }
+        write!(f, "]")
     }
 }
 

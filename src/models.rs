@@ -92,17 +92,8 @@ impl Raffle {
                 let list = ticket.eval_list();
                 let sum: u64 = list.iter().map(|i| *i as u64).sum();
                 let score = sum / list.len() as u64;
-                let response = match score {
-                    _n @ 0 => format_args!("you get nothing; good day sir!"),
-                    _n @ 1..=3 => format_args!("slightly better than a hostel shower!"),
-                    _n @ 4..=7 => format_args!("you're one of today's lucky 10,000!"),
-                    _n @ 8..=9 => format_args!("almost enough for a mediocre pizza!"),
-                    _ => format_args!("ding ding ding, you won the imaginary jackpot!"),
-                };
-                Ok(json!(format!(
-                    "For ticket {}, your score was {}... {}",
-                    id, score, response
-                )))
+                
+                Ok(Raffle::generate_response(id, score))
             }
             None => Err(ErrorKind::TicketNotFound(id)),
         }
@@ -114,6 +105,20 @@ impl Raffle {
             .filter(|k| !self.tickets.contains_key(k))
             .take(1)
             .sum()
+    }
+
+    fn generate_response(id: u64, score: u64) -> jVal {
+        let response = match score {
+                    _n @ 0 => format_args!("you get nothing; good day sir!"),
+                    _n @ 1..=3 => format_args!("slightly better than a hostel shower!"),
+                    _n @ 4..=7 => format_args!("you're one of today's lucky 10,000!"),
+                    _n @ 8..=9 => format_args!("almost enough for a mediocre pizza!"),
+                    _ => format_args!("ding ding ding, you won the imaginary jackpot!"),
+                };
+                json!(format!(
+                    "For ticket {}, your score was {}... {}",
+                    id, score, response
+                ))
     }
 }
 

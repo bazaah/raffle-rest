@@ -11,9 +11,11 @@ use {
     std::sync::RwLock,
 };
 
+// Aliases for easier readability
 type Internal<'r> = State<'r, RwLock<Raffle>>;
 type Response = Result<Good, Fail>;
 
+// Creates a new ticket with the default number of Lines [10]
 #[post("/ticket")]
 pub fn create_ticket(state: Internal) -> Response {
     match state.write() {
@@ -28,6 +30,7 @@ pub fn create_ticket(state: Internal) -> Response {
     }
 }
 
+// Creates a new ticket with a user defined number of Lines [lines]
 #[post("/ticket/<lines>")]
 pub fn create_ticket_with(state: Internal, lines: u64) -> Response {
     match state.write() {
@@ -42,6 +45,7 @@ pub fn create_ticket_with(state: Internal, lines: u64) -> Response {
     }
 }
 
+// Returns the entire list of Tickets as Json
 #[get("/ticket")]
 pub fn get_ticket_list(state: Internal) -> Response {
     match state.read() {
@@ -50,6 +54,7 @@ pub fn get_ticket_list(state: Internal) -> Response {
     }
 }
 
+// Returns a user defined Ticket via its id [id]
 #[get("/ticket/<id>")]
 pub fn get_ticket_from(state: Internal, id: u64) -> Response {
     match state.read() {
@@ -61,6 +66,7 @@ pub fn get_ticket_from(state: Internal, id: u64) -> Response {
     }
 }
 
+// Appends a user defined number of Lines [append] to a Ticket via its id [id]
 #[put("/ticket/<id>?<append>")]
 pub fn append_to_ticket(state: Internal, id: u64, append: Option<u64>) -> Response {
     match (append, state.write()) {
@@ -76,6 +82,7 @@ pub fn append_to_ticket(state: Internal, id: u64, append: Option<u64>) -> Respon
     }
 }
 
+// Uses up a Ticket via its id [id] and returns its score
 #[put("/eval/<id>")]
 pub fn evaluate_ticket(state: Internal, id: u64) -> Response {
     match state.write() {
@@ -87,6 +94,7 @@ pub fn evaluate_ticket(state: Internal, id: u64) -> Response {
     }
 }
 
+// Successful responses
 #[derive(Responder)]
 pub enum Good {
     #[response(status = 200)]
@@ -95,6 +103,7 @@ pub enum Good {
     Success(Json<jVal>),
 }
 
+// Errored responses
 #[derive(Debug)]
 pub enum Fail {
     Unprocessable(String),
@@ -102,6 +111,7 @@ pub enum Fail {
     LockPoisoned,
 }
 
+// Custom implementation for API specific errors
 impl<'r> Responder<'r> for Fail {
     fn respond_to(self, _: &Request) -> response::Result<'r> {
         match self {

@@ -5,13 +5,17 @@ extern crate rocket;
 
 use {crate::models::Raffle, std::sync::RwLock};
 
+// Import modules
 mod models;
 mod routes;
 
 fn main() {
+    // Start web server...
     rocket::ignite()
         .mount(
+            // off host root...
             "/",
+            // with the following routes...
             routes![
                 routes::create_ticket,
                 routes::create_ticket_with,
@@ -21,6 +25,7 @@ fn main() {
                 routes::evaluate_ticket,
             ],
         )
+        // and this internal state
         .manage(RwLock::new(Raffle::instantiate()))
         .launch();
 }

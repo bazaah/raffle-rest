@@ -8,19 +8,6 @@ use {
     std::{collections::BTreeMap, fmt},
 };
 
-#[derive(Debug, Clone)]
-pub enum ErrorKind {
-    TicketNotFound(u64),
-}
-
-impl fmt::Display for ErrorKind {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            ErrorKind::TicketNotFound(id) => write!(f, "Ticket id: {} doesn't exist", id),
-        }
-    }
-}
-
 pub struct Raffle {
     count: u64,
     tickets: BTreeMap<u64, Ticket>,
@@ -199,5 +186,18 @@ impl Line {
 impl fmt::Display for Line {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "|{}|", self.eval_line())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum ErrorKind {
+    TicketNotFound(u64),
+}
+
+impl fmt::Display for ErrorKind {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ErrorKind::TicketNotFound(id) => write!(f, "Ticket id: {} doesn't exist", id),
+        }
     }
 }

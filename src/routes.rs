@@ -4,12 +4,32 @@ use {
         http::Status,
         request::Request,
         response::{self, Responder, Response as rResponse},
-        State,
+        Rocket, State,
     },
     rocket_contrib::json::Json,
     serde_json::value::Value as jVal,
     std::sync::RwLock,
 };
+
+pub fn rocket() -> Rocket {
+    // Start web server...
+    rocket::ignite()
+        .mount(
+            // off host root...
+            "/",
+            // with the following routes...
+            routes![
+                create_ticket,
+                create_ticket_with,
+                get_ticket_from,
+                get_ticket_list,
+                append_to_ticket,
+                evaluate_ticket,
+            ],
+        )
+        // and this internal state
+        .manage(RwLock::new(Raffle::instantiate()))
+}
 
 // Aliases for easier readability
 type Internal<'r> = State<'r, RwLock<Raffle>>;
@@ -132,5 +152,83 @@ impl<'r> Responder<'r> for Fail {
                 .status(Status::ServiceUnavailable)
                 .ok(),
         }
+    }
+}
+
+/*
+Code
+-------------------------------------------------------------------------------
+Tests
+*/
+
+#[cfg(test)]
+mod tests {
+    #![allow(non_snake_case)]
+    use super::rocket;
+    use rocket::http::Status;
+    use rocket::local::Client;
+    use serde_json::json;
+
+    #[test]
+    fn Route_create_ticket() {
+        let client = Client::new(rocket()).expect("Valid rocket instance");
+        let mut response = client.post("/ticket").dispatch();
+        assert_eq!(response.status(), Status::Ok);
+        assert_eq!(
+            response.body_string(),
+            Some("Added ticket <1> with [10] lines".into())
+        );
+    }
+
+    #[test]
+    fn Route_create_ticket_from() {
+        let client = Client::new(rocket()).expect("Valid rocket instance");
+        let mut response = client.post("/ticket/5").dispatch();
+        assert_eq!(response.status(), Status::Ok);
+        assert_eq!(
+            response.body_string(),
+            Some("Added ticket <1> with [5] lines".into())
+        );
+    }
+
+    #[test]
+    fn Route_get_ticket_list() {
+        let client = Client::new(rocket()).expect("Valid rocket instance");
+        let mut response = client.get("/ticket").dispatch();
+        assert_eq!(response.status(), Status::Ok);
+        assert_eq!(response.body_string(), Some(json!([]).to_string()));
+    }
+
+    #[test]
+    fn Route_get_ticket_from_failure() {
+        let client = Client::new(rocket()).expect("Valid rocket instance");
+        let mut response = client.get("/ticket/1").dispatch();
+        assert_eq!(response.status(), Status::UnprocessableEntity);
+        assert_eq!(
+            response.body_string(),
+            Some("Ticket id: 5 doesn't exist".into())
+        );
+    }
+
+    #[test]
+    fn Route_append_to_ticket_failure() {
+        let client = Client::new(rocket()).expect("Valid rocket instance");
+        let mut response = client.get("/ticket/1").dispatch();
+        assert_eq!(response.status(), Status::UnprocessableEntity);
+        assert_eq!(
+            response.body_string(),
+            Some("Ticket id: 5 doesn't exist".into())
+        );
+    }
+
+    #[test]
+    fn Route_evaluate_ticket_failure() {
+        let client = Client::new(rocket()).expect("Valid rocket instance");
+        let mut response = client.get("/ticket/1").dispatch();
+        assert_eq!(response.status(), Status::UnprocessableEntity);
+        assert_eq!(
+            response.body_string(),
+            Some("Ticket id: 5 doesn't exist".into())
+        );
     }
 }

@@ -1,6 +1,6 @@
 [package]
 name = "poppulo-rest"
-version = "0.4.1"
+version = "1.0.0"
 authors = ["Bazaah <github@luxolus.com>"]
 edition = "2018"
 

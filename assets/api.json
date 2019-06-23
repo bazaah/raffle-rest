@@ -1,0 +1,60 @@
+{
+    "info": {
+        "title": "Raffle API overview",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "get": {
+            "/ticket": {
+                "summary": "Returns entire list of tickets",
+                "example usage": "http://localhost:8000/ticket",
+                "responses": {
+                    "200": "content-type/json"
+                }
+            },
+            "/ticket/{id}": {
+                "summary": "Returns ticket {id}'s value",
+                "example usage": "http://localhost:8000/ticket/7",
+                "responses": {
+                    "200": "content-type/json",
+                    "422": "content-type/json"
+                }
+            }
+        },
+        "post": {
+            "/ticket": {
+                "summary": "Create a ticket with the default number of lines",
+                "example usage": "http://localhost:8000/ticket",
+                "responses": {
+                    "200": "content-type/json"
+                }
+            },
+            "/ticket/{lines}": {
+                "summary": "Create a ticket with a custom number of {lines}",
+                "example usage": "http://localhost:8000/ticket/50",
+                "responses": {
+                    "200": "content-type/json"
+                }
+            }
+        },
+        "put": {
+            "/ticket/{id}?{append}": {
+                "summary": "Append ticket {id} with {append} more lines",
+                "example usage": "http://localhost:8000/ticket/2?append=10",
+                "responses": {
+                    "200": "content-type/json",
+                    "400": "content-type/json",
+                    "422": "content-type/json"
+                }
+            },
+            "/eval/{id}": {
+                "summary": "Evaluate and rip ticket {id}",
+                "example usage": "http://localhost:8000/eval/4",
+                "responses": {
+                    "200": "content-type/json",
+                    "422": "content-type/json"
+                }
+            }
+        }
+    }
+}

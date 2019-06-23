@@ -1,11 +1,11 @@
 {
     "info": {
         "title": "Raffle API overview",
-        "version": "1.0.0"
+        "version": "2.0.0"
     },
     "paths": {
         "get": {
-            "/ticket": {
+            "/ticket/list": {
                 "summary": "Returns entire list of tickets",
                 "example usage": "http://localhost:8000/ticket",
                 "responses": {
@@ -19,9 +19,7 @@
                     "200": "content-type/json",
                     "422": "content-type/json"
                 }
-            }
-        },
-        "post": {
+            },
             "/ticket": {
                 "summary": "Create a ticket with the default number of lines",
                 "example usage": "http://localhost:8000/ticket",
@@ -35,11 +33,9 @@
                 "responses": {
                     "200": "content-type/json"
                 }
-            }
-        },
-        "put": {
-            "/ticket/{id}?{append}": {
-                "summary": "Append ticket {id} with {append} more lines",
+            },
+            "/ticket/append/{id}?{lines}": {
+                "summary": "Append ticket {id} with {lines} more lines",
                 "example usage": "http://localhost:8000/ticket/2?append=10",
                 "responses": {
                     "200": "content-type/json",

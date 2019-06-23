@@ -103,13 +103,16 @@ impl Raffle {
             .sum()
     }
 
+    // Generate random responses from a group of pools
     fn generate_response(id: u64, score: u64) -> jVal {
+        let (mut s, r) = (rng(), Uniform::from(0..3));
+        let rand = r.sample(&mut s);
         let response = match score {
-            _n @ 0 => format_args!("you get nothing; good day sir!"),
-            _n @ 1..=3 => format_args!("slightly better than a hostel shower!"),
-            _n @ 4..=7 => format_args!("you're one of today's lucky 10,000!"),
-            _n @ 8..=9 => format_args!("almost enough for a mediocre pizza!"),
-            _ => format_args!("ding ding ding, you won the imaginary jackpot!"),
+            _n @ 0 => TERRIBLE[rand],
+            _n @ 1..=3 => MEDIOCRE[rand],
+            _n @ 4..=7 => AVERAGE[rand],
+            _n @ 8..=9 => GREAT[rand],
+            _ => JACKPOT[rand],
         };
         json!(format!(
             "For ticket {}, your score was {}... {}",
@@ -225,6 +228,32 @@ impl fmt::Display for ErrorKind {
         }
     }
 }
+
+const TERRIBLE: [&str; 3] = [
+    "you get nothing; good day sir!",
+    "I award you no points, and may...",
+    "I bet you have terrible anxiety!",
+];
+const MEDIOCRE: [&str; 3] = [
+    "slightly better than a hostel shower!",
+    "confidence is your prize!",
+    "its lonely being stuck in the middle!",
+];
+const AVERAGE: [&str; 3] = [
+    "you're one of today's lucky 10,000!",
+    "mostly better than half even...",
+    "delta Vee / delta Tee",
+];
+const GREAT: [&str; 3] = [
+    "almost enough for a cheese pizza!",
+    "thinking like a queen!",
+    "heralding from simplcity, goodness and truth",
+];
+const JACKPOT: [&str; 3] = [
+    "ding ding ding, you won the imaginary jackpot!",
+    "winner winner, chicken dinner!",
+    "supercalifragilisticexpialidocious",
+];
 
 /*
 Code

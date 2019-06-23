@@ -35,7 +35,7 @@ type Internal<'r> = State<'r, RwLock<Raffle>>;
 type Response = Result<Good, Fail>;
 
 // Creates a new ticket with the default number of Lines [10]
-#[post("/ticket")]
+#[get("/ticket")]
 fn create_ticket(state: Internal) -> Response {
     match state.write() {
         Ok(mut raffle) => {
@@ -50,7 +50,7 @@ fn create_ticket(state: Internal) -> Response {
 }
 
 // Creates a new ticket with a user defined number of Lines [lines]
-#[post("/ticket/<lines>")]
+#[get("/ticket/<lines>")]
 fn create_ticket_with(state: Internal, lines: u64) -> Response {
     match state.write() {
         Ok(mut raffle) => {
@@ -65,7 +65,7 @@ fn create_ticket_with(state: Internal, lines: u64) -> Response {
 }
 
 // Returns the entire list of Tickets as Json
-#[get("/ticket")]
+#[get("/ticket/list")]
 fn get_ticket_list(state: Internal) -> Response {
     match state.read() {
         Ok(raffle) => Ok(Good::Success(raffle.get_ticket_list())),
@@ -74,7 +74,7 @@ fn get_ticket_list(state: Internal) -> Response {
 }
 
 // Returns a user defined Ticket via its id [id]
-#[get("/ticket/<id>")]
+#[get("/ticket/list/<id>")]
 fn get_ticket_from(state: Internal, id: u64) -> Response {
     match state.read() {
         Ok(raffle) => match raffle.get_ticket(id) {
@@ -86,9 +86,9 @@ fn get_ticket_from(state: Internal, id: u64) -> Response {
 }
 
 // Appends a user defined number of Lines [append] to a Ticket via its id [id]
-#[put("/ticket/<id>?<append>")]
-fn append_to_ticket(state: Internal, id: u64, append: Option<u64>) -> Response {
-    match (append, state.write()) {
+#[get("/ticket/append/<id>?<lines>")]
+fn append_to_ticket(state: Internal, id: u64, lines: Option<u64>) -> Response {
+    match (lines, state.write()) {
         (Some(lines), Ok(mut raffle)) => match raffle.append_ticket(id, lines) {
             Ok(_) => Ok(Good::Info(format!(
                 "Appended [{}] lines to ticket <{}>",
@@ -102,7 +102,7 @@ fn append_to_ticket(state: Internal, id: u64, append: Option<u64>) -> Response {
 }
 
 // Uses up a Ticket via its id [id] and returns its score
-#[put("/eval/<id>")]
+#[get("/eval/<id>")]
 fn evaluate_ticket(state: Internal, id: u64) -> Response {
     match state.write() {
         Ok(mut raffle) => match raffle.evaluate_ticket(id) {
@@ -186,7 +186,7 @@ mod tests {
     #[test]
     fn Route_create_ticket() {
         let client = Client::new(rocket()).expect("Valid rocket instance");
-        let mut response = client.post("/ticket").dispatch();
+        let mut response = client.get("/ticket").dispatch();
         assert_eq!(response.status(), Status::Ok);
         assert_eq!(
             response.body_string(),
@@ -195,9 +195,9 @@ mod tests {
     }
 
     #[test]
-    fn Route_create_ticket_from() {
+    fn Route_create_ticket_with() {
         let client = Client::new(rocket()).expect("Valid rocket instance");
-        let mut response = client.post("/ticket/5").dispatch();
+        let mut response = client.get("/ticket/5").dispatch();
         assert_eq!(response.status(), Status::Ok);
         assert_eq!(
             response.body_string(),
@@ -208,7 +208,7 @@ mod tests {
     #[test]
     fn Route_get_ticket_list() {
         let client = Client::new(rocket()).expect("Valid rocket instance");
-        let mut response = client.get("/ticket").dispatch();
+        let mut response = client.get("/ticket/list").dispatch();
         assert_eq!(response.status(), Status::Ok);
         assert_eq!(
             response.body_string(),
@@ -219,7 +219,7 @@ mod tests {
     #[test]
     fn Route_get_ticket_from_failure() {
         let client = Client::new(rocket()).expect("Valid rocket instance");
-        let mut response = client.get("/ticket/1").dispatch();
+        let mut response = client.get("/ticket/list/1").dispatch();
         assert_eq!(response.status(), Status::UnprocessableEntity);
         assert_eq!(
             response.body_string(),
@@ -230,7 +230,7 @@ mod tests {
     #[test]
     fn Route_append_to_ticket_failure() {
         let client = Client::new(rocket()).expect("Valid rocket instance");
-        let mut response = client.get("/ticket/1").dispatch();
+        let mut response = client.get("/ticket/append/1?lines=10").dispatch();
         assert_eq!(response.status(), Status::UnprocessableEntity);
         assert_eq!(
             response.body_string(),
@@ -241,7 +241,7 @@ mod tests {
     #[test]
     fn Route_evaluate_ticket_failure() {
         let client = Client::new(rocket()).expect("Valid rocket instance");
-        let mut response = client.get("/ticket/1").dispatch();
+        let mut response = client.get("/eval/1").dispatch();
         assert_eq!(response.status(), Status::UnprocessableEntity);
         assert_eq!(
             response.body_string(),

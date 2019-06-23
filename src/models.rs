@@ -247,7 +247,7 @@ const AVERAGE: [&str; 3] = [
 const GREAT: [&str; 3] = [
     "almost enough for a cheese pizza!",
     "thinking like a queen!",
-    "heralding from simplcity, goodness and truth",
+    "heralding from simplicity, goodness and truth",
 ];
 const JACKPOT: [&str; 3] = [
     "ding ding ding, you won the imaginary jackpot!",

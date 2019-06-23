@@ -164,7 +164,6 @@ impl Ticket {
     fn eval_list(&self) -> Vec<u8> {
         self.line_list
             .iter()
-            .inspect(|line| eprintln!("{:?}", line))
             .map(|line| line.eval_line())
             .collect::<Vec<u8>>()
     }
